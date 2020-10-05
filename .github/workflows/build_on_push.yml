@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-18.04, ubuntu-20.04]
         experimental: [false]
         include:
           - os: macos-10.15
@@ -18,6 +18,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Install package dependencies
+        if:  ${{ matrix.os == 'ubuntu-18.04' }}
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y apt-transport-https ca-certificates gnupg software-properties-common wget
+          wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
+          sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+          sudo apt install gcc-8 g++-8
+          echo "CXX=/usr/bin/g++" >> $GITHUB_ENV
+          echo "LDFLAGS=-lstdc++fs" >> $GITHUB_ENV
 
       - name: Install package dependencies
         if:  startsWith( matrix.os, 'ubuntu' )
